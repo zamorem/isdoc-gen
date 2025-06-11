@@ -1,0 +1,21 @@
+supplier:
+  name: "Supplier Company s.r.o."
+  company_id: "12345678"
+  tax_id: "CZ12345678"
+  address:
+    street: "Hlavní 123/45"
+    city:   "Město"
+    zip:    "10000"
+  bank_account: "1234567890/0100"
+
+recipient:
+  name: "Client Company a.s."
+  company_id: "87654321"
+  tax_id: "CZ87654321"
+  address:
+    street: "Vedlejší 987/65"
+    city:   "Okresní město"
+    zip:    "20000"
+
+due_days: 14
+currency: "CZK"

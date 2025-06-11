@@ -1,0 +1,20 @@
+{
+  "name": "isdoc-gen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@deltazero/isdoc": "^0.1.2",
+    "js-yaml": "^4.1.0",
+    "ts-node": "^10.9.2",
+    "xmlbuilder2": "^3.1.1",
+    "yargs": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.15.28",
+    "@types/yargs": "^17.0.33"
+  }
+}

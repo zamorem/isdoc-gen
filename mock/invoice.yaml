@@ -1,0 +1,15 @@
+month: 6
+nr: 5
+payment_id: 202505
+items:
+  - text: "Vývoj aplikace za měsíc {{month}}"
+    md: 43
+    md_rate: 16500
+
+  - text: "Údržba serverů a monitoring"
+    md: 1
+    md_rate: 1550
+
+  - text: "Ad-hoc konzultace"
+    md: 3.75
+    md_rate: 7500
