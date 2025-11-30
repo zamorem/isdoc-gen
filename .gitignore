@@ -1,5 +1,7 @@
 node_modules
 .idea
 invoices/*.yaml
+invoices/zizka-*
+
 .DS_Store
 config.yaml
