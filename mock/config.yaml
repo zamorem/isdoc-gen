@@ -8,14 +8,26 @@ supplier:
     zip:    "10000"
   bank_account: "1234567890/0100"
 
-recipient:
-  name: "Client Company a.s."
-  company_id: "87654321"
-  tax_id: "CZ87654321"
-  address:
-    street: "Vedlejší 987/65"
-    city:   "Okresní město"
-    zip:    "20000"
+recipients:
+  client: &client
+    name: "Client Company a.s."
+    company_id: "87654321"
+    tax_id: "CZ87654321"
+    address:
+      street: "Vedlejší 987/65"
+      city:   "Okresní město"
+      zip:    "20000"
+  alt_client:
+    name: "Alternative Client s.r.o."
+    company_id: "99998888"
+    tax_id: "CZ99998888"
+    address:
+      street: "U Lípy 12"
+      city:   "Brno"
+      zip:    "60200"
+
+# legacy support
+recipient: *client
 
 due_days: 14
 currency: "CZK"
