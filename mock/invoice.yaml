@@ -11,5 +11,5 @@ items:
     md_rate: 1550
 
   - text: "Ad-hoc konzultace"
-    md: 3.75
-    md_rate: 7500
+    hr: 12.5
+    hr_rate: 2500

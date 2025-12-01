@@ -27,8 +27,10 @@ interface Config {
 }
 interface Item {
     text:     string;
-    md:    number;
-    md_rate:  number;
+    md?:      number;
+    md_rate?: number;
+    hr?:      number;
+    hr_rate?: number;
 }
 interface InvoiceYAML {
     nr: string;
@@ -71,6 +73,18 @@ const cfg = yaml.load(fs.readFileSync(cfgPath, 'utf8')) as Config;
 const inv = yaml.load(fs.readFileSync(invPath, 'utf8')) as InvoiceYAML;
 
 // ── Date & Number Helpers ──────────────────────────────────
+const resolveBilling = (item: Item) => {
+    const hasMD = item.md !== undefined && item.md_rate !== undefined;
+    if (hasMD) {
+        return { quantity: item.md as number, rate: item.md_rate as number, unit: 'md' as const };
+    }
+    const hasHR = item.hr !== undefined && item.hr_rate !== undefined;
+    if (hasHR) {
+        return { quantity: item.hr as number, rate: item.hr_rate as number, unit: 'hr' as const };
+    }
+    throw new Error(`Item "${item.text}" must specify either md+md_rate or hr+hr_rate`);
+};
+
 const year      = new Date().getFullYear();
 const month     = inv.month as keyof typeof monthsLabel;
 const invoiceNo = `${year}/${inv.nr}`;
@@ -78,7 +92,10 @@ const issueDate = new Date(year, month, 0, 12);           // last day of month
 const dueDate   = new Date(issueDate);
 dueDate.setDate(issueDate.getDate() + cfg.due_days);
 const total     = inv.items
-    .reduce((sum, it) => sum + Math.round(it.md * it.md_rate * 100)/100, 0);
+    .reduce((sum, it) => {
+        const { quantity, rate } = resolveBilling(it);
+        return sum + Math.round(quantity * rate * 100)/100;
+    }, 0);
 
 // assume non-VAT if tax_id is blank
 const vatApplicable = Boolean(cfg.supplier.tax_id && cfg.supplier.tax_id.trim());
@@ -136,15 +153,16 @@ const invoiceData = {
 
     InvoiceLines: {
         InvoiceLine: inv.items.map((it, idx) => {
-            const amt = Math.round(it.md * it.md_rate * 100)/100;
+            const { quantity, rate } = resolveBilling(it);
+            const amt = Math.round(quantity * rate * 100)/100;
             return {
                 ID:                        String(idx+1),
-                InvoicedQuantity:          it.md,
+                InvoicedQuantity:          quantity,
                 LineExtensionAmount:       amt,
                 LineExtensionAmountTaxInclusive: amt * (1 + vatPercent/100),
                 LineExtensionTaxAmount:    Math.round(amt * vatPercent/100 * 100)/100,
-                UnitPrice:                 it.md_rate,
-                UnitPriceTaxInclusive:     Math.round(it.md_rate * (1 + vatPercent/100) * 100)/100,
+                UnitPrice:                 rate,
+                UnitPriceTaxInclusive:     Math.round(rate * (1 + vatPercent/100) * 100)/100,
                 ClassifiedTaxCategory:     {
                     Percent: vatPercent,
                     VATCalculationMethod: 0,
