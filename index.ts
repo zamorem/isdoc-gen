@@ -21,7 +21,8 @@ interface CompanyConfig {
 }
 interface Config {
     supplier:   CompanyConfig;
-    recipient:  CompanyConfig;
+    recipient?:  CompanyConfig; // legacy single recipient
+    recipients?: Record<string, CompanyConfig>;
     due_days:   number;
     currency:   string;
 }
@@ -36,6 +37,7 @@ interface InvoiceYAML {
     nr: string;
     month: number;
     payment_id:   string;
+    recipient_id?: string;
     items: Item[];
 }
 const monthsLabel = {
@@ -84,6 +86,25 @@ const resolveBilling = (item: Item) => {
     }
     throw new Error(`Item "${item.text}" must specify either md+md_rate or hr+hr_rate`);
 };
+
+const resolveRecipient = (): CompanyConfig => {
+    // prefer recipients map when present
+    if (cfg.recipients && Object.keys(cfg.recipients).length > 0) {
+        const key = inv.recipient_id || Object.keys(cfg.recipients)[0];
+        const found = cfg.recipients[key];
+        if (!found) {
+            const available = Object.keys(cfg.recipients).join(', ') || 'none';
+            throw new Error(`Recipient "${key}" not found. Available: ${available}`);
+        }
+        return found;
+    }
+    if (cfg.recipient) {
+        return cfg.recipient;
+    }
+    throw new Error('No recipient configured.');
+};
+
+const recipient = resolveRecipient();
 
 const year      = new Date().getFullYear();
 const month     = inv.month as keyof typeof monthsLabel;
@@ -135,17 +156,17 @@ const invoiceData = {
 
     AccountingCustomerParty: {
         Party: {
-            PartyIdentification: { ID: cfg.recipient.company_id },
-            PartyName:           { Name: cfg.recipient.name },
+            PartyIdentification: { ID: recipient.company_id },
+            PartyName:           { Name: recipient.name },
             PostalAddress:       {
-                StreetName:     cfg.recipient.address.street,
+                StreetName:     recipient.address.street,
                 BuildingNumber: '',
-                CityName:       cfg.recipient.address.city,
-                PostalZone:     cfg.recipient.address.zip,
+                CityName:       recipient.address.city,
+                PostalZone:     recipient.address.zip,
                 Country:        { IdentificationCode: 'CZ', Name: '' }
             },
             PartyTaxScheme: {
-                CompanyID: cfg.recipient.tax_id || cfg.recipient.company_id,
+                CompanyID: recipient.tax_id || recipient.company_id,
                 TaxScheme: vatApplicable ? 'VAT' : 'NONE'
             }
         }

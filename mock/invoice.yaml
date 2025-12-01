@@ -1,6 +1,7 @@
 month: 6
 nr: 5
 payment_id: 202505
+recipient_id: alt_client
 items:
   - text: "Vývoj aplikace za měsíc {{month}}"
     md: 43
