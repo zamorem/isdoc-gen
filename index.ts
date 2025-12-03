@@ -78,11 +78,11 @@ const inv = yaml.load(fs.readFileSync(invPath, 'utf8')) as InvoiceYAML;
 const resolveBilling = (item: Item) => {
     const hasMD = item.md !== undefined && item.md_rate !== undefined;
     if (hasMD) {
-        return { quantity: item.md as number, rate: item.md_rate as number, unit: 'md' as const };
+        return { quantity: item.md as number, rate: item.md_rate as number, unit: 'MD' as const };
     }
     const hasHR = item.hr !== undefined && item.hr_rate !== undefined;
     if (hasHR) {
-        return { quantity: item.hr as number, rate: item.hr_rate as number, unit: 'hr' as const };
+        return { quantity: item.hr as number, rate: item.hr_rate as number, unit: 'H' as const };
     }
     throw new Error(`Item "${item.text}" must specify either md+md_rate or hr+hr_rate`);
 };
@@ -174,11 +174,14 @@ const invoiceData = {
 
     InvoiceLines: {
         InvoiceLine: inv.items.map((it, idx) => {
-            const { quantity, rate } = resolveBilling(it);
+            const { quantity, rate, unit } = resolveBilling(it);
             const amt = Math.round(quantity * rate * 100)/100;
             return {
                 ID:                        String(idx+1),
-                InvoicedQuantity:          quantity,
+                InvoicedQuantity:          {
+                    $_unitCode: unit,
+                    '#text': quantity
+                },
                 LineExtensionAmount:       amt,
                 LineExtensionAmountTaxInclusive: amt * (1 + vatPercent/100),
                 LineExtensionTaxAmount:    Math.round(amt * vatPercent/100 * 100)/100,
