@@ -82,7 +82,7 @@ const resolveBilling = (item: Item) => {
     }
     const hasHR = item.hr !== undefined && item.hr_rate !== undefined;
     if (hasHR) {
-        return { quantity: item.hr as number, rate: item.hr_rate as number, unit: 'H' as const };
+        return { quantity: item.hr as number, rate: item.hr_rate as number, unit: 'HOD' as const };
     }
     throw new Error(`Item "${item.text}" must specify either md+md_rate or hr+hr_rate`);
 };
