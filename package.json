@@ -7,7 +7,9 @@
   "license": "ISC",
   "dependencies": {
     "@deltazero/isdoc": "^0.1.2",
+    "dejavu-fonts-ttf": "^2.37.3",
     "js-yaml": "^4.1.0",
+    "pdfkit": "^0.17.2",
     "ts-node": "^10.9.2",
     "xmlbuilder2": "^3.1.1",
     "yargs": "^18.0.0"

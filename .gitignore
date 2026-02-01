@@ -5,3 +5,5 @@ invoices/zizka-*
 
 .DS_Store
 config.yaml
+/.tmp/
+/.opencode/

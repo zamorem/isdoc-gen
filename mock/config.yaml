@@ -7,6 +7,11 @@ supplier:
     city:   "Město"
     zip:    "10000"
   bank_account: "1234567890/0100"
+contact:
+  name: "Karel Barel"
+  address: "Morska 1061, Praha 4, 14700"
+  email: "petr@example.com"
+  phone: "+420 777 000 000"
 
 recipients:
   client: &client
