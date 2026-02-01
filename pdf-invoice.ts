@@ -65,15 +65,42 @@ const formatMoney = (value: number, currency: string) => {
 
 const formatDate = (date: Date) => new Intl.DateTimeFormat('cs-CZ').format(date);
 
+const formatCompanyId = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length !== 8) {
+        return value;
+    }
+    return `${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5)}`;
+};
+
+const formatVatId = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return '';
+    }
+    return `${trimmed.slice(0, 2)} ${trimmed.slice(2, 5)} ${trimmed.slice(5, 8)} ${trimmed.slice(8)}`;
+};
+
+const formatZip = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length !== 5) {
+        return value;
+    }
+    return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+};
+
 const formatPartyLines = (party: CompanyConfig) => {
     const lines = [
         party.name,
         party.address.street,
-        `${party.address.zip} ${party.address.city}`,
-        `IČO: ${party.company_id}`
+        `${formatZip(party.address.zip)} ${party.address.city}`,
+        `IČO: ${formatCompanyId(party.company_id)}`
     ];
     if (party.tax_id && party.tax_id.trim()) {
-        lines.push(`DIČ: ${party.tax_id}`);
+        const formattedVatId = formatVatId(party.tax_id);
+        lines.push(`DIČ: ${formattedVatId || party.tax_id}`);
+    } else {
+        lines.push(`Neplátce DPH`);
     }
     return lines;
 };
