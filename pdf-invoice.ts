@@ -23,6 +23,7 @@ export interface InvoicePdfData {
     outputPath: string;
     invoiceNo: string;
     issueDate: Date;
+    taxableDate: Date;
     dueDate: Date;
     supplier: CompanyConfig;
     recipient: CompanyConfig;
@@ -69,10 +70,10 @@ const formatPartyLines = (party: CompanyConfig) => {
         party.name,
         party.address.street,
         `${party.address.zip} ${party.address.city}`,
-        `IC: ${party.company_id}`
+        `IČO: ${party.company_id}`
     ];
     if (party.tax_id && party.tax_id.trim()) {
-        lines.push(`DIC: ${party.tax_id}`);
+        lines.push(`DIČ: ${party.tax_id}`);
     }
     return lines;
 };
@@ -109,7 +110,7 @@ const drawPartyBlock = (
 
 const drawInfoBlock = (
     doc: PDFDocument,
-    entries: Array<{ label: string; value: string }>,
+    entries: Array<{ label: string; value: string; rowHeight?: number }>,
     x: number,
     y: number,
     width: number
@@ -122,7 +123,7 @@ const drawInfoBlock = (
         doc.font(FONT_REGULAR).text(entry.value, x + labelWidth + 8, cursorY, {
             width: width - labelWidth - 8
         });
-        cursorY += 16;
+        cursorY += entry.rowHeight ?? 16;
     });
     return cursorY;
 };
@@ -225,10 +226,10 @@ const drawTotals = (
     rows.forEach((row, index) => {
         const isTotal = index === rows.length - 1;
         doc.font(isTotal ? FONT_BOLD : FONT_REGULAR)
-            .fontSize(isTotal ? LABEL_FONT_SIZE : BODY_FONT_SIZE)
+            .fontSize(BODY_FONT_SIZE)
             .text(row.label, x, cursorY, { width: width * 0.5 });
         doc.font(isTotal ? FONT_BOLD : FONT_REGULAR)
-            .fontSize(isTotal ? LABEL_FONT_SIZE : BODY_FONT_SIZE)
+            .fontSize(BODY_FONT_SIZE)
             .text(row.value, x, cursorY, { width, align: 'right' });
         cursorY += 18;
     });
@@ -296,7 +297,12 @@ export const renderInvoicePdf = (data: InvoicePdfData) => {
 
     const infoEntries = [
         { label: 'Datum vystavení', value: formatDate(data.issueDate) },
-        { label: 'Datum splatnosti', value: formatDate(data.dueDate) }
+        { label: 'Datum splatnosti', value: formatDate(data.dueDate) },
+        {
+            label: 'Datum uskutečnění zdanitelného plnění',
+            value: formatDate(data.taxableDate),
+            rowHeight: 32
+        }
     ];
     cursorY = drawInfoBlock(doc, infoEntries, PAGE_MARGIN, cursorY, contentWidth) + 6;
     cursorY = drawPaymentInfo(doc, data.supplier, data.paymentId, PAGE_MARGIN, cursorY, contentWidth) + 38;

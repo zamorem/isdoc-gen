@@ -75,12 +75,19 @@ const run = async () => {
 
     const recipient = resolveRecipient();
 
-    const year = new Date().getFullYear();
     const month = inv.month as keyof typeof monthsLabel;
-    const invoiceNo = `${year}/${inv.nr}`;
-    const issueDate = new Date(year, month, 0, 12); // last day of month
+    const parseDateValue = (value: string | Date) => {
+        if (value instanceof Date) {
+            return new Date(value);
+        }
+        return new Date(`${value}T12:00:00`);
+    };
+    const defaultIssueDate = () => new Date(2025, month, 0, 12); // last day of month
+    const issueDate = inv.issued_at ? parseDateValue(inv.issued_at) : defaultIssueDate();
+    const taxableDate = inv.taxable_at ? parseDateValue(inv.taxable_at) : issueDate;
+    const invoiceNo = `${issueDate.getFullYear()}/${inv.nr}`;
     const dueDate = new Date(issueDate);
-    dueDate.setDate(issueDate.getDate() + cfg.due_days);
+    dueDate.setDate(issueDate.getDate() + 14);
     const total = inv.items
         .reduce((sum, it) => {
             const { quantity, rate } = resolveBilling(it);
@@ -112,7 +119,7 @@ const run = async () => {
         ID: invoiceNo,
         IssuingSystem: 'zizka',
         IssueDate: issueDate,
-        TaxPointDate: issueDate,
+        TaxPointDate: taxableDate,
         VATApplicable: vatApplicable,
         DocumentCurrencyCode: currency,
 
@@ -247,6 +254,7 @@ const run = async () => {
         outputPath: pdfPath,
         invoiceNo,
         issueDate,
+        taxableDate,
         dueDate,
         supplier: cfg.supplier,
         recipient,

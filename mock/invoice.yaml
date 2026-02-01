@@ -1,4 +1,6 @@
 month: 6
+issued_at: 2025-06-30
+taxable_at: 2025-06-30
 nr: 5
 payment_id: 202505
 recipient_id: alt_client

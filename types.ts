@@ -39,6 +39,8 @@ export interface Item {
 export interface InvoiceYAML {
     nr: string;
     month: number;
+    issued_at?: string;
+    taxable_at?: string;
     payment_id: string;
     recipient_id?: string;
     items: Item[];
