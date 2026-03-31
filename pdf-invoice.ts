@@ -6,9 +6,10 @@ import { CompanyConfig, ContactInfo } from './types';
 export interface InvoicePdfItem {
     description: string;
     quantity: number;
-    unit: string;
+    unit?: string;
     rate: number;
     amount: number;
+    billingLabel?: string;
 }
 
 export interface InvoiceTotals {
@@ -206,8 +207,12 @@ const drawItemsTable = (
 
     items.forEach((item) => {
         const quantityText = item.quantity.toString().replace('.', ',');
-        const rateText = `${quantityText} × ${item.rate.toFixed(2).replace('.', ',')} ${currency}`;
-        const lineText = `${item.description} (${quantityText} ${item.unit.toLowerCase()})`;
+        const rateText = item.billingLabel ?? (item.unit
+            ? `${quantityText} × ${item.rate.toFixed(2).replace('.', ',')} ${currency}`
+            : '');
+        const lineText = item.unit
+            ? `${item.description} (${quantityText} ${item.unit.toLowerCase()})`
+            : item.description;
         const descriptionHeight = doc.heightOfString(lineText, {
             width: columnWidths[0] - ROW_PADDING * 2
         });
