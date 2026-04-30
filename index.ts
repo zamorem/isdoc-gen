@@ -88,7 +88,7 @@ const run = async () => {
                 quantity: 1,
                 rate: item.sum,
                 amount: roundMoney(item.sum),
-                pdfBillingLabel: 'jednorázová částka',
+                pdfBillingLabel: '',
                 isdocUnitCode: 'C62'
             } satisfies ResolvedBilling;
         }
