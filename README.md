@@ -29,5 +29,6 @@ faktura.yaml polozky:
 - `recipient_id` odkaz do `recipients`
 - `md` + `md_rate` (puvodni varianta)
 - `hr` + `hr_rate` (fakturace po hodinach)
+- `sum` (jednorazova castka za polozku)
 
 ```

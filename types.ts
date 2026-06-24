@@ -34,6 +34,7 @@ export interface Item {
     md_rate?: number;
     hr?: number;
     hr_rate?: number;
+    sum?: number;
 }
 
 export interface InvoiceYAML {

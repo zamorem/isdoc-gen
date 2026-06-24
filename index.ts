@@ -8,6 +8,16 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { renderInvoicePdf } from './pdf-invoice';
 import { CompanyConfig, Config, Item, InvoiceYAML } from './types';
+
+type ResolvedBilling = {
+    quantity: number;
+    rate: number;
+    amount: number;
+    pdfUnit?: string;
+    pdfBillingLabel?: string;
+    isdocUnitCode: string;
+};
+
 const monthsLabel = {
     1: "leden",
     2: "únor",
@@ -44,17 +54,49 @@ const run = async () => {
     const inv = yaml.load(fs.readFileSync(invPath, 'utf8')) as InvoiceYAML;
 
     // ── Date & Number Helpers ──────────────────────────────────
+    const roundMoney = (value: number) => Math.round(value * 100) / 100;
+
     const resolveBilling = (item: Item) => {
         const hasMD = item.md !== undefined && item.md_rate !== undefined;
         if (hasMD) {
-            return { quantity: item.md as number, rate: item.md_rate as number, unit: 'MD' as const };
+            const quantity = item.md as number;
+            const rate = item.md_rate as number;
+            return {
+                quantity,
+                rate,
+                amount: roundMoney(quantity * rate),
+                pdfUnit: 'MD',
+                isdocUnitCode: 'MD'
+            } satisfies ResolvedBilling;
         }
+
         const hasHR = item.hr !== undefined && item.hr_rate !== undefined;
         if (hasHR) {
-            return { quantity: item.hr as number, rate: item.hr_rate as number, unit: 'HOD' as const };
+            const quantity = item.hr as number;
+            const rate = item.hr_rate as number;
+            return {
+                quantity,
+                rate,
+                amount: roundMoney(quantity * rate),
+                pdfUnit: 'HOD',
+                isdocUnitCode: 'HOD'
+            } satisfies ResolvedBilling;
         }
-        throw new Error(`Item "${item.text}" must specify either md+md_rate or hr+hr_rate`);
+
+        if (item.sum !== undefined) {
+            return {
+                quantity: 1,
+                rate: item.sum,
+                amount: roundMoney(item.sum),
+                pdfBillingLabel: '',
+                isdocUnitCode: 'C62'
+            } satisfies ResolvedBilling;
+        }
+
+        throw new Error(`Item "${item.text}" must specify either md+md_rate, hr+hr_rate, or sum`);
     };
+
+    const resolveItemDescription = (text: string) => text.replace('{{month}}', String(monthsLabel[month]));
 
     const resolveRecipient = (): CompanyConfig => {
         // prefer recipients map when present
@@ -90,8 +132,8 @@ const run = async () => {
     dueDate.setDate(issueDate.getDate() + 14);
     const total = inv.items
         .reduce((sum, it) => {
-            const { quantity, rate } = resolveBilling(it);
-            return sum + Math.round(quantity * rate * 100) / 100;
+            const { amount } = resolveBilling(it);
+            return sum + amount;
         }, 0);
 
     // assume non-VAT if tax_id is blank
@@ -102,14 +144,14 @@ const run = async () => {
     const taxAmount = Math.round(total * vatPercent / 100 * 100) / 100;
 
     const pdfItems = inv.items.map((it) => {
-        const { quantity, rate, unit } = resolveBilling(it);
-        const amount = Math.round(quantity * rate * 100) / 100;
+        const { quantity, rate, amount, pdfUnit, pdfBillingLabel } = resolveBilling(it);
         return {
-            description: it.text.replace('{{month}}', String(monthsLabel[month])),
+            description: resolveItemDescription(it.text),
             quantity,
-            unit,
+            unit: pdfUnit,
             rate,
-            amount
+            amount,
+            billingLabel: pdfBillingLabel
         };
     });
 
@@ -161,25 +203,24 @@ const run = async () => {
 
         InvoiceLines: {
             InvoiceLine: inv.items.map((it, idx) => {
-                const { quantity, rate, unit } = resolveBilling(it);
-                const amt = Math.round(quantity * rate * 100) / 100;
+                const { quantity, rate, amount, isdocUnitCode } = resolveBilling(it);
                 return {
                     ID: String(idx + 1),
                     InvoicedQuantity: {
-                        $_unitCode: unit,
+                        $_unitCode: isdocUnitCode,
                         '#text': quantity
                     },
-                    LineExtensionAmount: amt,
-                    LineExtensionAmountTaxInclusive: amt * (1 + vatPercent / 100),
-                    LineExtensionTaxAmount: Math.round(amt * vatPercent / 100 * 100) / 100,
+                    LineExtensionAmount: amount,
+                    LineExtensionAmountTaxInclusive: roundMoney(amount * (1 + vatPercent / 100)),
+                    LineExtensionTaxAmount: roundMoney(amount * vatPercent / 100),
                     UnitPrice: rate,
-                    UnitPriceTaxInclusive: Math.round(rate * (1 + vatPercent / 100) * 100) / 100,
+                    UnitPriceTaxInclusive: roundMoney(rate * (1 + vatPercent / 100)),
                     ClassifiedTaxCategory: {
                         Percent: vatPercent,
                         VATCalculationMethod: 0,
                         VATApplicable: vatApplicable
                     },
-                    Item: { Description: it.text.replace('{{month}}', String(monthsLabel[month])) }
+                    Item: { Description: resolveItemDescription(it.text) }
                 };
             })
         },
